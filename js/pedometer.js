@@ -1,29 +1,25 @@
 let stepCount = 0;
-let lastAcceleration = { x: 0, y: 0, z: 0 };
-let stepThreshold = 12; // Adjust this threshold experimentally
-
-function handleMotion(event) {
-    const acc = event.accelerationIncludingGravity;
-
-    if (!acc) return;
-
-    // Calculate overall acceleration magnitude
-    const magnitude = Math.sqrt(acc.x ** 2 + acc.y ** 2 + acc.z ** 2);
-
-    // Detect peaks (when the magnitude crosses a threshold)
-    if (magnitude > stepThreshold &&
-        (Math.abs(acc.x - lastAcceleration.x) > 1 ||
-            Math.abs(acc.y - lastAcceleration.y) > 1 ||
-            Math.abs(acc.z - lastAcceleration.z) > 1)) {
-        stepCount++;
-        document.getElementById("steps").textContent = stepCount;
-    }
-
-    lastAcceleration = { ...acc };
-}
+let lastPeakTime = 0;
 
 if (window.DeviceMotionEvent) {
-    window.addEventListener("devicemotion", handleMotion, true);
+    window.addEventListener("devicemotion", (event) => {
+        const acc = event.accelerationIncludingGravity;
+        if (!acc) return;
+
+        // Calculate acceleration magnitude
+        const magnitude = Math.sqrt(
+            acc.x * acc.x + acc.y * acc.y + acc.z * acc.z
+        );
+
+        const threshold = 12; // adjust if too sensitive or not sensitive enough
+        const now = Date.now();
+
+        if (magnitude > threshold && now - lastPeakTime > 300) {
+            stepCount++;
+            lastPeakTime = now;
+            document.getElementById("steps").textContent = stepCount;
+        }
+    });
 } else {
-    alert("DeviceMotion not supported on this device/browser.");
+    alert("DeviceMotion is not supported on this device.");
 }
